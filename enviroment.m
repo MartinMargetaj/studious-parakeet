@@ -4,7 +4,7 @@ classdef enviroment < handle
     
     properties
         vehicle
-        masterSwitch = 1;
+        masterSwitch = 'BasicObstacles';
         enviromentMap
         xLim
         yLim
@@ -20,16 +20,28 @@ classdef enviroment < handle
         
         function obj = gen_enviroment(obj)
             switch obj.masterSwitch
-                case 1 
+                case 'BasicEmpty'
+                    %% View definition
                     obj.xLim = [-10.5,10.5];
                     obj.yLim = [-10.5,10.5];
+                    
                     %% end of world
                     obj.lines{end+1} = [-10,10;-10,-10];
                     obj.lines{end+1} = [-10,-10;10,-10];
                     obj.lines{end+1} = [10,10;10,-10];
                     obj.lines{end+1} = [-10,10;10,10];
-                case 2
+                case 'BasicObstacles'
+                    %% View definition
+                    obj.xLim = [-10.5,10.5];
+                    obj.yLim = [-10.5,10.5];
                     
+                    %% end of world
+                    obj.lines{end+1} = [-10,10;-10,-10];
+                    obj.lines{end+1} = [-10,-10;10,-10];
+                    obj.lines{end+1} = [10,10;10,-10];
+                    obj.lines{end+1} = [-10,10;10,10];
+                    %% Obstacle 1
+                    obj.lines{end+1} = [5,10;0,0];
                 otherwise
                     
             end 

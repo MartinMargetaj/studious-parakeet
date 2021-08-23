@@ -8,8 +8,8 @@ classdef vehicle < handle
         crashDetn
         sensors = {};
         brain
-        x = 0%9;
-        y = 0%-7.2;
+        x = 8;
+        y = -7.2;
         xDot = 0;
         yDot = 0;
         v = 3;
@@ -32,14 +32,14 @@ classdef vehicle < handle
             obj.plotter = plotter(obj);
             obj.enviroment = enviroment(obj);
             obj.crashDetn = crashDetn(obj);
-            obj.sensors{end + 1} = sensor(obj,obj.enviroment, [obj.height/2, 0],'lowRange',0);
+%             obj.sensors{end + 1} = sensor(obj,obj.enviroment, [obj.height/2, 0],'lowRange',0);
             obj.sensors{end + 1} = sensor(obj,obj.enviroment, [-obj.height/2, 0],'lowRange',pi);
             obj.sensors{end + 1} = sensor(obj,obj.enviroment, [obj.height/2, obj.width/2],'lowRange',pi/2);
             obj.sensors{end + 1} = sensor(obj,obj.enviroment, [obj.height/2, -obj.width/2],'lowRange',-pi/2);
 %             obj.sensors{end + 1} = sensor(obj,obj.enviroment, [-obj.height/2, obj.width/2],'lowRange',pi/2);
 %             obj.sensors{end + 1} = sensor(obj,obj.enviroment, [-obj.height/2, -obj.width/2],'lowRange',-pi/2);
             obj.sensors{end + 1} = sensor(obj,obj.enviroment, [0, 0],'highRange',0);
-            obj.brain = brain(obj.plotter,obj.enviroment,obj.crashDetn,obj.sensors,obj);
+            obj.brain = brain(obj.sensors,obj);
         end
         
         function obj = sim_step(obj)
@@ -47,9 +47,9 @@ classdef vehicle < handle
                 obj.sensors{i} =  obj.sensors{i}.sim_lasers;
             end
             [dF,dR,dV] = obj.brain.ask_what_next;
-%             obj.deltaF = dF;
-%             obj.deltaR = dR;
-%             obj.v = dV;
+            obj.deltaF = dF;
+            obj.deltaR = dR;
+            obj.v = dV;
             if obj.v < 5
                 obj.beta = atan((obj.wheelBaseX*obj.ratioT*tan(obj.deltaR))+(obj.wheelBaseX*(1-obj.ratioT)*tan(obj.deltaF))/(obj.wheelBaseX));
                 obj.psiDot = ((obj.v*cos(obj.beta))/obj.wheelBaseX)*(tan(obj.deltaF)-tan(obj.deltaR));

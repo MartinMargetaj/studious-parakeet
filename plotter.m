@@ -105,8 +105,8 @@ classdef plotter < handle
         function obj = plot_sensors(obj)
             for i = 1:numel(obj.vehicle.sensors)
                 actSnrs = obj.vehicle.sensors{i};
-                for j = 1:numel(actSnrs.lasers)
-                    plot([actSnrs.actSnsrPos(1),actSnrs.lasers{j}(1)],[actSnrs.actSnsrPos(2),actSnrs.lasers{j}(2)],actSnrs.color)
+                for j = 1:size(actSnrs.lasers,2)
+                    plot([actSnrs.actSnsrPos(1),actSnrs.lasers{1,j}(1)],[actSnrs.actSnsrPos(2),actSnrs.lasers{1,j}(2)],actSnrs.color)
                 end
             end
         end

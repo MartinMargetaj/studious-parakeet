@@ -24,9 +24,10 @@ classdef crashDetn < handle
 %             vehicleLines = get_veh_lines(obj,obj.plotter.vehicleBorder);
 %             for i = 1:length(vehicleLines)
                 for j = 1:length(obj.enviroment.lines)
+                    %% go throught all lines (obstacles) and check if there is intersection between car and obsacles
                     tempLine = obj.enviroment.lines{j};
-                    tempLineX = tempLine(:,1)';
-                    tempLineY = tempLine(:,2)';
+                    tempLineX = tempLine(1,:);
+                    tempLineY = tempLine(2,:);
                     [x,y] = intersections(obj.plotter.vehicleBorder(1,:),obj.plotter.vehicleBorder(2,:),tempLineX,tempLineY);
                     if ~isempty(x)
                         crashed = true;
@@ -39,9 +40,10 @@ classdef crashDetn < handle
         function endPoint = get_end_point(obj, point1, point2)
             endPoint = point2;
             for j = 1:length(obj.enviroment.lines)
+                %% go through all lines(obsatcles) and find endpoint
                 tempLine = obj.enviroment.lines{j};
-                tempLineX = tempLine(:,1)';
-                tempLineY = tempLine(:,2)';
+                tempLineX = tempLine(1,:);
+                tempLineY = tempLine(2,:);
                 [x,y] = intersections([point1(1), point2(1)],[point1(2), point2(2)],tempLineX,tempLineY);
                 if ~isempty(x)
                     endPoint = [x,y];

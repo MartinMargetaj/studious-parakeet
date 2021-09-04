@@ -6,76 +6,160 @@ classdef brain < handle
         sensors = {};
         vehicle
         obstacles
-        simulatedVehicle
         knownEnviroment
-        predictionStep
+        predictionStep = 5;
+        width
+        height
+        ratioT
+        x
+        y
+        xDot
+        yDot
+        v
+        deltaF
+        deltaR
+        psiDot
+        psi
+        beta
+        wheelBaseX
+        simStep
+        xTarget = 8
+        yTarget = 8
     end
     
     methods
         function obj = brain(sensors_,vehicle_)
             obj.sensors = sensors_;
             obj.vehicle = vehicle_;
+            obj.width = vehicle_.width;
+            obj.height = vehicle_.height;
+            obj.ratioT = vehicle_.ratioT;
+            obj.wheelBaseX = vehicle_.wheelBaseX;
+            obj.simStep = vehicle_.simStep*25;
         end
         
-        function [dF,dR,V] = ask_what_next(obj)
+        function [dF,dR,V] = ask_what_next(obj, x, y, xDot, yDot, v, deltaF, deltaR, psiDot, psi, beta)
             obj.knownEnviroment = obj.get_known_space();
+            obj.x = x;
+            obj.y = y;
+            obj.xDot = xDot;
+            obj.yDot = yDot;
+            obj.v = v;
+            obj.deltaF = deltaF;
+            obj.deltaR = deltaR;
+            obj.psiDot = psiDot;
+            obj.psi = psi;
+            obj.beta = beta;
             crash = true;
-            obj.simulatedVehicle = obj.vehicle;
+            optimumFound = false;
+            itteration = 0;
+            deltaFNew = obj.deltaF;
+            score = sqrt((obj.x-obj.xTarget)^2 + (obj.y-obj.yTarget)^2);
+            scoreVector = [];
+            angleVector = [];
+            for i =-30:1:30
+                obj.x = x;
+                obj.y = y;
+                obj.xDot = xDot;
+                obj.yDot = yDot;
+                obj.v = v;
+                obj.deltaF = deltaF;
+                obj.deltaR = deltaR;
+                obj.psiDot = psiDot;
+                obj.psi = psi;
+                obj.beta = beta;
+                obj.deltaF = deg2rad(i);
+                obj.simulate_step();
+                score = sqrt((obj.x-obj.xTarget)^2 + (obj.y-obj.yTarget)^2);
+                scoreVector(end+1) = score;
+                angleVector(end+1) = obj.deltaF;
+            end
+            table = [scoreVector',angleVector'];
+            table = sortrows(table);
+            obj.x = x;
+            obj.y = y;
+            obj.xDot = xDot;
+            obj.yDot = yDot;
+            obj.v = v;
+            obj.deltaF = table(1,2);
+            obj.deltaR = deltaR;
+            obj.psiDot = psiDot;
+            obj.psi = psi;
+            obj.beta = beta;
+                itteration = 1;
             while crash
+                obj.x = x;
+                obj.y = y;
+                obj.xDot = xDot;
+                obj.yDot = yDot;
+                obj.v = v;
+                obj.deltaR = deltaR;
+                obj.psiDot = psiDot;
+                obj.psi = psi;
+                obj.beta = beta;
+                itteration = itteration+1;
                 for i = 1:obj.predictionStep
                     obj.simulate_step();
                     [crash,~] = obj.check_crash();
                     if crash
-                        obj.simulatedVehicle.v = 0;
+                        if itteration > numel(table)/2;
+                            obj.deltaF = table(numel(table)/2,2);
+                            crash = false;
+                            break
+                        end
+                        obj.deltaF = table(itteration,2);
+                        break
                     end
                 end
             end
-            dF = obj.simulatedVehicle.deltaF;
-            dR = obj.simulatedVehicle.deltaR;
-            V = obj.simulatedVehicle.v;
+            dF = obj.deltaF;
+            dR = obj.deltaR;
+            V = obj.v;
         end
         
         function [crashed,intersectPoint]= check_crash(obj)
             intersectPoint = [];
-            rFront = sqrt((obj.simulatedVehicle.height*obj.simulatedVehicle.ratioT)^2+(obj.simulatedVehicle.width/2)^2);
-            rRear = sqrt((obj.simulatedVehicle.height*(1-obj.simulatedVehicle.ratioT))^2+(obj.simulatedVehicle.width/2)^2);
-            FLangle = atan((obj.simulatedVehicle.width/2)/(obj.simulatedVehicle.height*(obj.simulatedVehicle.ratioT)));
-            RLangle = pi - atan((obj.simulatedVehicle.width/2)/(obj.simulatedVehicle.height*(1-obj.simulatedVehicle.ratioT)));
+            rFront = sqrt((obj.height*obj.ratioT)^2+(obj.width/2)^2);
+            rRear = sqrt((obj.height*(1-obj.ratioT))^2+(obj.width/2)^2);
+            FLangle = atan((obj.width/2)/(obj.height*(obj.ratioT)));
+            RLangle = pi - atan((obj.width/2)/(obj.height*(1-obj.ratioT)));
             RRangle = -RLangle;
             FRangle = -FLangle;
-            FL = [obj.simulatedVehicle.x + rFront * cos(FLangle+obj.simulatedVehicle.psi); obj.simulatedVehicle.y + rFront * sin(FLangle+obj.simulatedVehicle.psi)];
-            FR = [obj.simulatedVehicle.x + rFront * cos(FRangle+obj.simulatedVehicle.psi); obj.simulatedVehicle.y + rFront * sin(FRangle+obj.simulatedVehicle.psi)];             
-            RL = [obj.simulatedVehicle.x + rRear  * cos(RLangle+obj.simulatedVehicle.psi); obj.simulatedVehicle.y + rRear  * sin(RLangle+obj.simulatedVehicle.psi)];
-            RR = [obj.simulatedVehicle.x + rRear  * cos(RRangle+obj.simulatedVehicle.psi); obj.simulatedVehicle.y + rRear  * sin(RRangle+obj.simulatedVehicle.psi)];
+            FL = [obj.x + rFront * cos(FLangle+obj.psi); obj.y + rFront * sin(FLangle+obj.psi)];
+            FR = [obj.x + rFront * cos(FRangle+obj.psi); obj.y + rFront * sin(FRangle+obj.psi)];
+            RL = [obj.x + rRear  * cos(RLangle+obj.psi); obj.y + rRear  * sin(RLangle+obj.psi)];
+            RR = [obj.x + rRear  * cos(RRangle+obj.psi); obj.y + rRear  * sin(RRangle+obj.psi)];
             vehicleBorder = [FL,FR,RR,RL,FL];
+%             plot(vehicleBorder(1,:),vehicleBorder(2,:),'k')
+%             pause(.1)    
             crashed = false;
             if isempty(vehicleBorder)
                 return
             end
-%             vehicleLines = get_veh_lines(obj,vehicleBorder);
-%             for i = 1:length(vehicleLines)
-                for j = 1:length(obj.knownEnviroment)
-                    %% go throught all lines (obstacles) and check if there is intersection between car and obsacles
-                    tempLine = obj.knownEnviroment{j};
-                    tempLineX = tempLine(1,:);
-                    tempLineY = tempLine(2,:);
-                    [x,y] = intersections(vehicleBorder(1,:),vehicleBorder(2,:),tempLineX,tempLineY);
-                    if ~isempty(x)
-                        crashed = true;
-                        intersectPoint = [x,y];
-                    end
+            %             vehicleLines = get_veh_lines(obj,vehicleBorder);
+            %             for i = 1:length(vehicleLines)
+            for j = 1:length(obj.knownEnviroment)
+                %% go throught all lines (obstacles) and check if there is intersection between car and obsacles
+                tempLine = obj.knownEnviroment{j};
+                tempLineX = tempLine(1,:);
+                tempLineY = tempLine(2,:);
+                [xPoint,yPoint] = intersections(vehicleBorder(1,:),vehicleBorder(2,:),tempLineX,tempLineY);
+                if ~isempty(xPoint)
+                    crashed = true;
+                    intersectPoint = [xPoint,yPoint];
                 end
-%             end
+            end
+            %             end
         end
         
         function simulate_step(obj)
-            obj.simulatedVehicle.beta = atan((obj.simulatedVehicle.wheelBaseX*obj.simulatedVehicle.ratioT*tan(obj.simulatedVehicle.deltaR))+(obj.simulatedVehicle.wheelBaseX*(1-obj.simulatedVehicle.ratioT)*tan(obj.simulatedVehicle.deltaF))/(obj.simulatedVehicle.wheelBaseX));
-            obj.simulatedVehicle.psiDot = ((obj.simulatedVehicle.v*cos(obj.simulatedVehicle.beta))/obj.simulatedVehicle.wheelBaseX)*(tan(obj.simulatedVehicle.deltaF)-tan(obj.simulatedVehicle.deltaR));
-            obj.simulatedVehicle.psi = obj.simulatedVehicle.psi + obj.simulatedVehicle.psiDot*obj.simulatedVehicle.simStep;
-            obj.simulatedVehicle.yDot = obj.simulatedVehicle.v*sin(obj.simulatedVehicle.psi + obj.simulatedVehicle.beta);
-            obj.simulatedVehicle.xDot = obj.simulatedVehicle.v*cos(obj.simulatedVehicle.psi + obj.simulatedVehicle.beta);
-            obj.simulatedVehicle.x = obj.simulatedVehicle.xDot*obj.simulatedVehicle.simStep + obj.simulatedVehicle.x;
-            obj.simulatedVehicle.y = obj.simulatedVehicle.yDot*obj.simulatedVehicle.simStep + obj.simulatedVehicle.y;
+            obj.beta = atan((obj.wheelBaseX*obj.ratioT*tan(obj.deltaR))+(obj.wheelBaseX*(1-obj.ratioT)*tan(obj.deltaF))/(obj.wheelBaseX));
+            obj.psiDot = ((obj.v*cos(obj.beta))/obj.wheelBaseX)*(tan(obj.deltaF)-tan(obj.deltaR));
+            obj.psi = obj.psi + obj.psiDot*obj.simStep;
+            obj.yDot = obj.v*sin(obj.psi + obj.beta);
+            obj.xDot = obj.v*cos(obj.psi + obj.beta);
+            obj.x = obj.xDot*obj.simStep + obj.x;
+            obj.y = obj.yDot*obj.simStep + obj.y;
         end
         
         function lines = get_known_space(obj)
@@ -91,6 +175,17 @@ classdef brain < handle
                     lines{end+1} = [point1', point2'];
                 end
             end
+            obj.plot_what_veh_see(lines);
+        end
+        
+        function plot_what_veh_see(obj,lines)
+            for i = 1:numel(lines)
+                hold on
+                plot(lines{i}(1,:),lines{i}(2,:),'k','LineWidth', 1.2)
+            end
+            xlim(obj.vehicle.enviroment.xLim)
+            ylim(obj.vehicle.enviroment.yLim)
+            pause(.1)
         end
     end
     

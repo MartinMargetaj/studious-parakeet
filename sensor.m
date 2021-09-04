@@ -34,7 +34,7 @@ classdef sensor < handle
                     obj.positionAngle = 0;
                     obj.rangeDistance = 10;
                     obj.rangeAngle = 2*pi;
-                    obj.sections = 18;
+                    obj.sections = 36;
                     obj.color = 'c';
                     obj.frequency = 10;
                     obj.step = 10;

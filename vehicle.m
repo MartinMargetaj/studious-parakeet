@@ -32,12 +32,12 @@ classdef vehicle < handle
             obj.plotter = plotter(obj);
             obj.enviroment = enviroment(obj);
             obj.crashDetn = crashDetn(obj);
-%             obj.sensors{end + 1} = sensor(obj,obj.enviroment, [obj.height/2, 0],'lowRange',0);
+% %             obj.sensors{end + 1} = sensor(obj,obj.enviroment, [obj.height/2, 0],'lowRange',0);
             obj.sensors{end + 1} = sensor(obj,obj.enviroment, [-obj.height/2, 0],'lowRange',pi);
             obj.sensors{end + 1} = sensor(obj,obj.enviroment, [obj.height/2, obj.width/2],'lowRange',pi/2);
             obj.sensors{end + 1} = sensor(obj,obj.enviroment, [obj.height/2, -obj.width/2],'lowRange',-pi/2);
-%             obj.sensors{end + 1} = sensor(obj,obj.enviroment, [-obj.height/2, obj.width/2],'lowRange',pi/2);
-%             obj.sensors{end + 1} = sensor(obj,obj.enviroment, [-obj.height/2, -obj.width/2],'lowRange',-pi/2);
+% %             obj.sensors{end + 1} = sensor(obj,obj.enviroment, [-obj.height/2, obj.width/2],'lowRange',pi/2);
+% %             obj.sensors{end + 1} = sensor(obj,obj.enviroment, [-obj.height/2, -obj.width/2],'lowRange',-pi/2);
             obj.sensors{end + 1} = sensor(obj,obj.enviroment, [0, 0],'highRange',0);
             obj.brain = brain(obj.sensors,obj);
         end
@@ -46,7 +46,7 @@ classdef vehicle < handle
             for i =1:numel(obj.sensors)
                 obj.sensors{i} =  obj.sensors{i}.sim_lasers;
             end
-            [dF,dR,dV] = obj.brain.ask_what_next;
+            [dF,dR,dV] = obj.brain.ask_what_next(obj.x, obj.y, obj.xDot, obj.yDot, obj.v, obj.deltaF, obj.deltaR, obj.psiDot, obj.psi, obj.beta);
             obj.deltaF = dF;
             obj.deltaR = dR;
             obj.v = dV;
